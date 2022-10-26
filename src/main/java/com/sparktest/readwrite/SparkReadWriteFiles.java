@@ -61,8 +61,8 @@ public class SparkReadWriteFiles
         inst.readFromHDFS("src/main/resources/test.parquet","2022","9","28");
 
         // below code shows how to do the reads in Async mode and union the results
-        CompletableFuture<Dataset<Row>> ft1 = inst.readFromHDFSAsync("src/main/resources/test.parquet","2022","9","28");
-        CompletableFuture<Dataset<Row>> ft2 = inst.readFromHDFSAsync("src/main/resources/test.parquet","2022","9","11");
+        CompletableFuture<Dataset<Row>> ft1 = inst.readFromHDFSAsync(BASE_PATH + "/test.parquet","2022","9","28");
+        CompletableFuture<Dataset<Row>> ft2 = inst.readFromHDFSAsync(BASE_PATH + "/test.parquet","2022","9","11");
 
         //create the async jobs but do not run them
         List<CompletableFuture<Dataset<Row>>> com = new ArrayList<>();
