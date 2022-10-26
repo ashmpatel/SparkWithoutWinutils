@@ -40,6 +40,6 @@ object MyApp extends App {
 */
 
   val temp = new SparkReadWriteFiles(spark2);
-  temp.test(spark2)
+  temp.test()
 
 }

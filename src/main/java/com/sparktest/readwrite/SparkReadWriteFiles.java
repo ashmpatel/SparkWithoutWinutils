@@ -33,36 +33,36 @@ public class SparkReadWriteFiles
     }
 
 
-    public void test(SparkSession sparkSession) throws IOException, ExecutionException, InterruptedException {
-        SparkReadWriteFiles inst = new SparkReadWriteFiles(sparkSession);
-
-
+    public void test() throws IOException, ExecutionException, InterruptedException {
 
         //time the conversion of a csv file to parquet
+        // clean up first
+        FileUtils.deleteDirectory(new File(BASE_PATH + "/output_full.parquet"));
+
         long startTime = System.currentTimeMillis();
-        inst.saveToHDFS("output_csv_full.csv", BASE_PATH + "/output_full.parquet",false);
+        saveToHDFS("output_csv_full.csv", BASE_PATH + "/output_full.parquet",false);
         System.out.println("Time to write csv " + (System.currentTimeMillis() - startTime));
 
-        Dataset<Row> testCsv = inst.readFromHDFSTest(BASE_PATH + "/output_full.parquet");
+        Dataset<Row> testCsv = readFromHDFSTest(BASE_PATH + "/output_full.parquet");
         System.out.println(testCsv.count());
 
         // clean up first
         FileUtils.deleteDirectory(new File(BASE_PATH + "/test.parquet"));
-        inst.saveToHDFS("test.csv", BASE_PATH + "/test.parquet", true);
+        saveToHDFS("test.csv", BASE_PATH + "/test.parquet", true);
         // append the data from test_2.csv to the existing Parquet_file_path
-        inst.appendToHDFS("test_2.csv", BASE_PATH + "/test.parquet");
+        appendToHDFS("test_2.csv", BASE_PATH + "/test.parquet");
 
         // read one partition
-        Dataset<Row> partOne = inst.readFromHDFS(BASE_PATH + "/test.parquet","2022","9","11");
+        Dataset<Row> partOne = readFromHDFS(BASE_PATH + "/test.parquet","2022","9","11");
         System.out.println("Partition count 1 : " + partOne.count());
 
         // read a different partition
-        Dataset<Row> partTwo = inst.readFromHDFS(BASE_PATH + "/test.parquet","2022","9","28");
+        Dataset<Row> partTwo = readFromHDFS(BASE_PATH + "/test.parquet","2022","9","28");
         System.out.println("Partition count 2 : " + partTwo.count());
 
         // below code shows how to do the reads in Async mode and union the results
-        CompletableFuture<Dataset<Row>> ft1 = inst.readFromHDFSAsync(BASE_PATH + "/test.parquet","2022","9","28");
-        CompletableFuture<Dataset<Row>> ft2 = inst.readFromHDFSAsync(BASE_PATH + "/test.parquet","2022","9","11");
+        CompletableFuture<Dataset<Row>> ft1 = readFromHDFSAsync(BASE_PATH + "/test.parquet","2022","9","28");
+        CompletableFuture<Dataset<Row>> ft2 = readFromHDFSAsync(BASE_PATH + "/test.parquet","2022","9","11");
 
         //create the async jobs but do not run them
         List<CompletableFuture<Dataset<Row>>> com = new ArrayList<>();
@@ -70,10 +70,10 @@ public class SparkReadWriteFiles
         com.add(ft2);
 
         // run the jobs and get the results
-        List<Dataset<Row>> results2 = inst.sequence2(com);
+        List<Dataset<Row>> results2 = sequence2(com);
 
         // union all the results and display them
-        Dataset<Row> allResults= inst.unionAll(results2);
+        Dataset<Row> allResults = unionAll(results2);
 
         System.out.println("Total results from Different partitions unioned : " + allResults.count());
         allResults.printSchema();
