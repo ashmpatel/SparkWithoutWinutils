@@ -40,16 +40,16 @@ public class SparkReadWriteFiles
         // clean up first
         FileUtils.deleteDirectory(new File(PARQUET_FILE_PATH));
 
-       // long startTime = System.currentTimeMillis();
-       // inst.saveToHDFS("output_csv_full.csv", PARQUET_FILE_PATH);
+        long startTime = System.currentTimeMillis();
+        inst.saveToHDFS("output_csv_full.csv", BASE_PATH + "/output_full.parquet",false);
 
-       // System.out.println("Time to write csv " + (System.currentTimeMillis() - startTime));
+        System.out.println("Time to write csv " + (System.currentTimeMillis() - startTime));
 
-        //Dataset<Row> testCsv = inst.readFromHDFSTest((String filePath);
-       // System.out.println(testCsv.count());
+        Dataset<Row> testCsv = inst.readFromHDFSTest(BASE_PATH + "/output_full.parquet",null);
+        System.out.println(testCsv.count());
 
 
-        inst.saveToHDFS("test.csv", PARQUET_FILE_PATH);
+        inst.saveToHDFS("test.csv", PARQUET_FILE_PATH, true);
 
         // append the data from test_2.csv to the existing Parquet_file_path
         inst.appendToHDFS("test_2.csv", PARQUET_FILE_PATH);
@@ -182,7 +182,7 @@ public class SparkReadWriteFiles
     /**
      * Writes the data to the file system
      */
-    public void saveToHDFS(String fileName, String parquetFilePath) {
+    public void saveToHDFS(String fileName, String parquetFilePath, boolean partition) {
         final String dir = BASE_PATH + "/" + fileName;
         Dataset<Row> ds = sparkSession.read().option("header", true).option("inferSchema", true).csv(dir);
 
@@ -194,7 +194,11 @@ public class SparkReadWriteFiles
 
         // ds.write().mode(SaveMode.Overwrite).parquet(FILE_PATH + "/y=" + year + "/m=" + month + "/d=" + day);
 
-         ds.write().mode(SaveMode.Overwrite).format(codec).partitionBy("y", "m","d").save(parquetFilePath);
+        if (partition) {
+            ds.write().mode(SaveMode.Overwrite).format(codec).partitionBy("y", "m", "d").save(parquetFilePath);
+        } else {
+            ds.write().mode(SaveMode.Overwrite).format(codec).save(parquetFilePath);
+        }
 
        // ds.write().mode(SaveMode.Overwrite).format(codec).save(parquetFilePath);
     }
