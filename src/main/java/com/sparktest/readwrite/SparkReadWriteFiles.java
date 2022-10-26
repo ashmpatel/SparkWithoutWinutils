@@ -49,7 +49,7 @@ public class SparkReadWriteFiles
         // clean up first
         FileUtils.deleteDirectory(new File(BASE_PATH + "/test.parquet"));
         saveToHDFS("test.csv", BASE_PATH + "/test.parquet", true);
-        // append the data from test_2.csv to the existing Parquet_file_path
+        // APPEND the data from test_2.csv to the existing Parquet_file_path of test.csv
         appendToHDFS("test_2.csv", BASE_PATH + "/test.parquet");
 
         // read one partition
