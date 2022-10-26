@@ -23,7 +23,6 @@ public class SparkReadWriteFiles
 
     private static final String codec = "parquet";
     private static final String BASE_PATH = String.valueOf(Paths.get("src/main/resources/").normalize().toAbsolutePath());
-    private static final String PARQUET_FILE_PATH = BASE_PATH + "/test.parquet";
     private static final ExecutorService executorService = Executors.newFixedThreadPool(10);
 
     /**
@@ -37,28 +36,29 @@ public class SparkReadWriteFiles
     public void test(SparkSession sparkSession) throws IOException, ExecutionException, InterruptedException {
         SparkReadWriteFiles inst = new SparkReadWriteFiles(sparkSession);
 
-        // clean up first
-        FileUtils.deleteDirectory(new File(PARQUET_FILE_PATH));
 
+
+        //time the conversion of a csv file to parquet
         long startTime = System.currentTimeMillis();
         inst.saveToHDFS("output_csv_full.csv", BASE_PATH + "/output_full.parquet",false);
-
         System.out.println("Time to write csv " + (System.currentTimeMillis() - startTime));
 
         Dataset<Row> testCsv = inst.readFromHDFSTest(BASE_PATH + "/output_full.parquet");
         System.out.println(testCsv.count());
 
-
-        inst.saveToHDFS("test.csv", PARQUET_FILE_PATH, true);
-
+        // clean up first
+        FileUtils.deleteDirectory(new File(BASE_PATH + "/test.parquet"));
+        inst.saveToHDFS("test.csv", BASE_PATH + "/test.parquet", true);
         // append the data from test_2.csv to the existing Parquet_file_path
-        inst.appendToHDFS("test_2.csv", PARQUET_FILE_PATH);
+        inst.appendToHDFS("test_2.csv", BASE_PATH + "/test.parquet");
 
         // read one partition
-        inst.readFromHDFS(BASE_PATH + "/test.parquet","2022","9","11");
+        Dataset<Row> partOne = inst.readFromHDFS(BASE_PATH + "/test.parquet","2022","9","11");
+        System.out.println("Partition count 1 : " + partOne.count());
 
         // read a different partition
-        inst.readFromHDFS(BASE_PATH + "/test.parquet","2022","9","28");
+        Dataset<Row> partTwo = inst.readFromHDFS(BASE_PATH + "/test.parquet","2022","9","28");
+        System.out.println("Partition count 2 : " + partTwo.count());
 
         // below code shows how to do the reads in Async mode and union the results
         CompletableFuture<Dataset<Row>> ft1 = inst.readFromHDFSAsync(BASE_PATH + "/test.parquet","2022","9","28");
@@ -179,16 +179,14 @@ public class SparkReadWriteFiles
      * Writes the data to the file system
      */
     public void saveToHDFS(String fileName, String parquetFilePath, boolean partition) {
-        final String dir = BASE_PATH + "/" + fileName;
-        Dataset<Row> ds = sparkSession.read().option("header", true).option("inferSchema", true).csv(dir);
+        Dataset<Row> ds = sparkSession.read().option("header", true).option("inferSchema", true).csv(BASE_PATH + "/" + fileName);
 
-
-        // how to specify a partition and NOT use the data in the dataset i.e overide it
+        /* how to specify a partition and NOT use the data in the dataset i.e. override it
         String year="2022";
         String month = "9";
         String day = "28";
-
-        // ds.write().mode(SaveMode.Overwrite).parquet(FILE_PATH + "/y=" + year + "/m=" + month + "/d=" + day);
+        ds.write().mode(SaveMode.Overwrite).parquet(FILE_PATH + "/y=" + year + "/m=" + month + "/d=" + day);
+        */
 
         if (partition) {
             ds.write().mode(SaveMode.Overwrite).format(codec).partitionBy("y", "m", "d").save(parquetFilePath);
@@ -196,7 +194,6 @@ public class SparkReadWriteFiles
             ds.write().mode(SaveMode.Overwrite).format(codec).save(parquetFilePath);
         }
 
-       // ds.write().mode(SaveMode.Overwrite).format(codec).save(parquetFilePath);
     }
 
     /**
@@ -204,8 +201,7 @@ public class SparkReadWriteFiles
      */
     public void appendToHDFS(String fileName, String appendToParquetFile) {
         // read a NEW dataset
-        final String dir = BASE_PATH + "/" + fileName;
-        Dataset<Row> ds = sparkSession.read().option("header", true).option("inferSchema", true).csv(dir);
+        Dataset<Row> ds = sparkSession.read().option("header", true).option("inferSchema", true).csv(BASE_PATH + "/" + fileName);
 
         // append to the SAME PARQUET FILE- -this is now appending a new partition is done
         ds.write().mode(SaveMode.Append).format(codec).partitionBy("y", "m","d").save(appendToParquetFile);
