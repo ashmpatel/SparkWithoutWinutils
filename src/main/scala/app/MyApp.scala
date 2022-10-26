@@ -15,8 +15,6 @@ object MyApp extends App {
     .config("java.io.tmpdir","C:/temp")
     .getOrCreate();
 
-
-  println(spark2)
   println("Spark Version : "+spark2.version)
 
 
@@ -46,9 +44,4 @@ object MyApp extends App {
   val temp = new SparkReadWriteFiles(spark2);
   temp.test(spark2)
 
-  //temp.saveToHDFS("test.csv", "src/main/resources/test.parquet");
-  //val df3 = temp.readFromHDFS("src/main/resources/test.parquet","2022","9","11");
-
- // df3.printSchema()
- // println(df3.count());
 }

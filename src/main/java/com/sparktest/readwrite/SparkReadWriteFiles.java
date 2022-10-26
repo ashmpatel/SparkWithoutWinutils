@@ -27,7 +27,7 @@ public class SparkReadWriteFiles
     private static final ExecutorService executorService = Executors.newFixedThreadPool(10);
 
     /**
-     * Start a local Spark in-memory cluster with 2 threads
+     * Start a local Spark in-memory cluster
      */
     public SparkReadWriteFiles(SparkSession sparkSession) {
         this.sparkSession = sparkSession;
@@ -45,7 +45,7 @@ public class SparkReadWriteFiles
 
         System.out.println("Time to write csv " + (System.currentTimeMillis() - startTime));
 
-        Dataset<Row> testCsv = inst.readFromHDFSTest(BASE_PATH + "/output_full.parquet",null);
+        Dataset<Row> testCsv = inst.readFromHDFSTest(BASE_PATH + "/output_full.parquet");
         System.out.println(testCsv.count());
 
 
@@ -171,12 +171,8 @@ public class SparkReadWriteFiles
     }
 
 
-    public Dataset<Row> readFromHDFSTest(String filePath,String partitionTimeRef) {
-        if (partitionTimeRef == null) {
-            return sparkSession.read().parquet(filePath);
-        } else{
-            return sparkSession.read().parquet(filePath + "/time_ref=" + partitionTimeRef);
-        }
+    public Dataset<Row> readFromHDFSTest(String filePath) {
+        return sparkSession.read().parquet(filePath);
     }
 
     /**
