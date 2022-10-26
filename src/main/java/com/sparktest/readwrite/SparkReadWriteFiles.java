@@ -55,10 +55,10 @@ public class SparkReadWriteFiles
         inst.appendToHDFS("test_2.csv", PARQUET_FILE_PATH);
 
         // read one partition
-        inst.readFromHDFS("src/main/resources/test.parquet","2022","9","11");
+        inst.readFromHDFS(BASE_PATH + "/test.parquet","2022","9","11");
 
         // read a different partition
-        inst.readFromHDFS("src/main/resources/test.parquet","2022","9","28");
+        inst.readFromHDFS(BASE_PATH + "/test.parquet","2022","9","28");
 
         // below code shows how to do the reads in Async mode and union the results
         CompletableFuture<Dataset<Row>> ft1 = inst.readFromHDFSAsync(BASE_PATH + "/test.parquet","2022","9","28");
@@ -209,7 +209,7 @@ public class SparkReadWriteFiles
     public void appendToHDFS(String fileName, String appendToParquetFile) {
         // read a NEW dataset
         final String dir = BASE_PATH + "/" + fileName;
-        Dataset<Row> ds = sparkSession.read().option("header", true).format("org.apache.spark.sql.execution.datasources.csv.CSVFileFormat").option("inferSchema", true).csv(dir);
+        Dataset<Row> ds = sparkSession.read().option("header", true).option("inferSchema", true).csv(dir);
 
         // append to the SAME PARQUET FILE- -this is now appending a new partition is done
         ds.write().mode(SaveMode.Append).format(codec).partitionBy("y", "m","d").save(appendToParquetFile);
