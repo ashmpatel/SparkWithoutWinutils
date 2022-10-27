@@ -1,6 +1,8 @@
 package com.sparktest.readwrite;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.spark.SparkConf;
+import org.apache.spark.SparkContext;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SaveMode;
@@ -32,6 +34,28 @@ public class SparkReadWriteFiles
         this.sparkSession = sparkSession;
     }
 
+
+    /**
+     * This method will start Spark and convert files to parquet etc.
+     * OR from Scala it can be called and pass in the Spark session. Have a look at the scala method.
+     * @param args
+     * @throws IOException
+     * @throws ExecutionException
+     * @throws InterruptedException
+     */
+    public static void main(String args[]) throws IOException, ExecutionException, InterruptedException {
+
+        System.setProperty("java.io.tmpdir","C:/temp");
+
+        SparkSession spark = SparkSession.builder()
+                .master("local[8]")
+                .appName("test.com")
+                .getOrCreate();
+
+        SparkReadWriteFiles temp = new SparkReadWriteFiles(spark);
+        temp.test();
+
+    }
 
     public void test() throws IOException, ExecutionException, InterruptedException {
 
